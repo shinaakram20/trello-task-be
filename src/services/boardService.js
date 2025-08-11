@@ -116,16 +116,38 @@ export class BoardService {
 
   async deleteBoard(id) {
     try {
-      // First check if board exists
+      // First check if board exists and get its details
       const board = await this.getBoardById(id);
       if (!board) {
+        console.log(`Board ${id} not found for deletion`);
         return false;
       }
 
-      // Delete associated lists and tasks first (cascade delete)
+      // Delete all tasks in all lists of this board first
+      const deleteTasksQuery = `
+        DELETE FROM tasks 
+        WHERE list_id IN (
+          SELECT id FROM lists WHERE board_id = $1
+        )
+      `;
+      const tasksResult = await this.db.query(deleteTasksQuery, [id]);
+      console.log(`Deleted ${tasksResult.rowCount} tasks from board ${id}`);
+
+      // Delete all lists in this board
+      const deleteListsQuery = 'DELETE FROM lists WHERE board_id = $1';
+      const listsResult = await this.db.query(deleteListsQuery, [id]);
+      console.log(`Deleted ${listsResult.rowCount} lists from board ${id}`);
+
+      // Finally delete the board
       const deleteQuery = 'DELETE FROM boards WHERE id = $1';
       const result = await this.db.query(deleteQuery, [id]);
-      return result.rowCount > 0;
+      
+      if (result.rowCount > 0) {
+        console.log(`Board ${id} deleted successfully from database`);
+        return true;
+      }
+      
+      return false;
     } catch (error) {
       console.error('Error in deleteBoard:', error);
       throw error;

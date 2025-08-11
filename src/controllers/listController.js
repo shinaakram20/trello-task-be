@@ -125,15 +125,27 @@ export const deleteList = async (req, res) => {
   try {
     const { id } = req.params;
     
+    if (!id) {
+      return res.status(400).json({ error: 'List ID is required' });
+    }
+    
     const deleted = await listService.deleteList(id);
     
     if (!deleted) {
-      return res.status(404).json({ error: 'List not found' });
+      return res.status(404).json({ error: 'List not found or could not be deleted' });
     }
     
-    res.json({ message: 'List deleted successfully' });
+    res.json({ message: 'List deleted successfully', listId: id });
   } catch (error) {
     console.error('Error deleting list:', error);
-    res.status(500).json({ error: 'Failed to delete list' });
+    
+    // Provide more specific error messages
+    if (error.code === '23503') { // Foreign key violation
+      res.status(400).json({ error: 'Cannot delete list: it has associated tasks' });
+    } else if (error.code === '23505') { // Unique constraint violation
+      res.status(400).json({ error: 'Cannot delete list: constraint violation' });
+    } else {
+      res.status(500).json({ error: 'Failed to delete list. Please try again.' });
+    }
   }
 };

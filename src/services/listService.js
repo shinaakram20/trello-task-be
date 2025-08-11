@@ -187,10 +187,46 @@ export class ListService {
 
   async deleteList(id) {
     try {
-      // Delete the list (cascade delete will handle tasks)
+      // First verify list exists and get its details
+      const listQuery = 'SELECT id, board_id, position FROM lists WHERE id = $1';
+      const listResult = await this.db.query(listQuery, [id]);
+      
+      if (listResult.rows.length === 0) {
+        console.log(`List ${id} not found for deletion`);
+        return false;
+      }
+      
+      const list = listResult.rows[0];
+      
+      // Delete all tasks in the list first (due to foreign key constraints)
+      const deleteTasksQuery = 'DELETE FROM tasks WHERE list_id = $1';
+      const tasksResult = await this.db.query(deleteTasksQuery, [id]);
+      console.log(`Deleted ${tasksResult.rowCount} tasks from list ${id}`);
+      
+      // Delete the list
       const deleteQuery = 'DELETE FROM lists WHERE id = $1';
       const result = await this.db.query(deleteQuery, [id]);
-      return result.rowCount > 0;
+      
+      if (result.rowCount > 0) {
+        console.log(`List ${id} deleted successfully from database`);
+        
+        // Reorder remaining lists in the same board to maintain position consistency
+        try {
+          const reorderQuery = `
+            UPDATE lists 
+            SET position = position - 1 
+            WHERE board_id = $1 AND position > $2
+          `;
+          await this.db.query(reorderQuery, [list.board_id, list.position]);
+        } catch (reorderError) {
+          console.error('Error reordering lists after deletion:', reorderError);
+          // Don't fail the deletion if reordering fails
+        }
+        
+        return true;
+      }
+      
+      return false;
     } catch (error) {
       console.error('Error in deleteList:', error);
       throw error;
