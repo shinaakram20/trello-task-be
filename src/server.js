@@ -1,17 +1,17 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import boardRoutes from './routes/boards.js';
-import listRoutes from './routes/lists.js';
-import taskRoutes from './routes/tasks.js';
-import activityRoutes from './routes/activity.js';
-import commentRoutes from './routes/comments.js';
+import boardRoutes from '../routes/boards.js';
+import listRoutes from '../routes/lists.js';
+import taskRoutes from '../routes/tasks.js';
+import activityRoutes from '../routes/activity.js';
+import commentRoutes from '../routes/comments.js';
+import serverless from 'serverless-http';
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
@@ -31,12 +31,12 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/comments', commentRoutes);
 
-// Health check endpoint
+// Health check
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Server is running' });
 });
 
-// Error handling middleware
+// Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
@@ -47,6 +47,5 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+export default app;
+export const handler = serverless(app);
