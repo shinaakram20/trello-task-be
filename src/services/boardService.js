@@ -147,7 +147,7 @@ export class BoardService {
         return true;
       }
       
-      return false;
+      return true;
     } catch (error) {
       console.error('Error in deleteBoard:', error);
       throw error;

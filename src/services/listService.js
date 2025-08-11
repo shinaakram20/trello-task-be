@@ -226,7 +226,7 @@ export class ListService {
         return true;
       }
       
-      return false;
+      return true;
     } catch (error) {
       console.error('Error in deleteList:', error);
       throw error;
