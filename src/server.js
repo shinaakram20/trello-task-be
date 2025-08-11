@@ -5,17 +5,17 @@ import boardRoutes from './routes/boards.js';
 import listRoutes from './routes/lists.js';
 import taskRoutes from './routes/tasks.js';
 import activityRoutes from './routes/activity.js';
-import serverless from 'serverless-http';
 import commentRoutes from './routes/comments.js';
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: ['https://trello-task-fe.vercel.app'],
+  origin: ['http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -47,5 +47,6 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-export default app;
-export const handler = serverless(app);
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});

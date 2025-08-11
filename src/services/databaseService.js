@@ -9,12 +9,12 @@ export class DatabaseService {
 
   init() {
     // Create postgres client (auto-connects)
-    const connectionString = process.env.DATABASE_URL;
-    this.sql = postgres(connectionString, {
-      ssl: process.env.NODE_ENV === 'production'
-        ? { rejectUnauthorized: true }
-        : { rejectUnauthorized: false }
+    this.sql = postgres(process.env.DATABASE_URL, {
+      ssl: {
+        rejectUnauthorized: false
+      }
     });
+    
 
   }
 
